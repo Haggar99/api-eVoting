@@ -19,7 +19,7 @@ npm install
 ```
 5.
 ```bash
-cd api-eVoting.git
+cd api-eVoting
 ```
 6. `ionic`
 ```bash
