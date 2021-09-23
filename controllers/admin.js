@@ -11,6 +11,7 @@ exports.register = (req, res) => {
         cin: req.body.cin,
         password:''
     };
+    console.log(adminData);
     Admin
     .findOne({email: req.body.email})
     .then(user => {

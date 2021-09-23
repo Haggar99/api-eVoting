@@ -4,6 +4,10 @@ const Vote = require('../models/vote');
 const Candidat = require('../models/candidat');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const openpgp = require('openpgp');
+const encrypt = require('../middlewares/encrypt');
+const decrypt = require('../middlewares/decrypt');
+
 
 exports.register = (req, res) => {
     const data = {
@@ -37,9 +41,15 @@ exports.register = (req, res) => {
                         let token = jwt.sign(
                             {userId: user._id, email: user.email},
                             process.env.JWT_KEY,
-                            {expiresIn: '48h'}
+                            {expiresIn: '200h'}
                         );
-                        res.json({token: token});
+                        const userData = {
+                            token,
+                            user,
+                            message: 'Votre compte a été bien activé',
+                            expiresIn: 1728000000
+                        }
+                        res.json({user: userData});
                     }).catch(error => res.send('erreur: '+error));
                    
                 }
@@ -61,9 +71,15 @@ exports.login = (req, res) => {
                 const token = jwt.sign(
                     {userId: user._id, email: user.email},
                     process.env.JWT_KEY,
-                    {expiresIn: '48h'}
+                    {expiresIn: '200h'}
                 );
-                res.json({message: 'vous etes bien connecté!', token: token, user});
+                const userData = {
+                    token,
+                    user,
+                    message: 'vous etes bien connecté!',
+                    expiresIn: 1728000000
+                }
+                res.json({user: userData});
             }else {
                 res.json({message: 'mot de passe incorrect!'});
             }
@@ -73,22 +89,68 @@ exports.login = (req, res) => {
     }).catch(error => res.send('erreur: '+error));
 }
 
+exports.getVotant = async (req, res) => {
+    const data = [
+        {
+            nom: 'Haggar',
+            nbre: 'iHSJZzUCbOPJLMBenjQhGUIbOwqxXK8X0PFmrHuKeVboCS6CrZMlLkyxu9zvNNBocz+OZYFmKeTfkcC9dCQlWcrc2McArOeWklr4vPapgqgo8+LknYkyad9eYYUQJea/eNTTTj9fkhROGD6Zd2U/7WLvcYqMYRsqNlKjEAbk1og='
+        },
+        {
+            nom: 'Senoussi',
+            nbre: 'Q7fdhefe7mhuTc5IHdAnGqEiXQ5qQ7zqbgDq29ukWQEPFx+Xn5O59uM4HQlqlStFhhgcyGmYslCiLnyIjocSy0ghTnoat/akwaQwAq06mqlgnhxZkeJ/okUWAatPdVOUYjQL4se7M+WPHsxqMUy43Ynb3t4oWH65Dq0jKC4uH70='
+        }
+    ]
+    // const msgEn = encrypt(12);
+    // decrypt(msgEn);
+    console.log(data);
+    const newData = data.map(el => {
+        const newD = {
+            ...el,
+            nbre: decrypt(el.nbre)
+        };
+        return newD;
+    });
+    console.log(newData);
+    try {
+        const votant = await Votant.findById(req.params.votantId);
+        if (votant) {
+            await res.status(200).json({votant});
+        } else {
+            res.json({message: "Aucun utilisateur a ce nom"});
+        }
+    } catch (error) {
+        res.json({message:'Une erreur est survenus!'});
+    }
+}
+
 exports.voting = async (req, res) => {
     const userData = req.UserData;
     //const userData = "";
     try {
-        const votant = await Votant.findById(userData.userId);
+        const votant = await Votant.findById(req.body.userId);
         const candidat = await Candidat.findById(req.body.candidatId);
 
         if(votant.isVoted) {
-            res.json({message: 'Désolé, vous avez déjà voté!'});
+          await res.json({message: 'Désolé, vous avez déjà voté!'});
         }else {
-            Vote.findOne({votantId: userData._id})
+            Vote.findOne({votantId: req.body.userId})
                 .then(vote => {
                     if(vote){
                      res.json({message: 'Désolé, vous avez déjà voté!'});
                     }else{
                         try {
+                            let nobreVoteDecrypted;
+                            const nombreVote = candidat.nombreVote;
+                            if(nombreVote) {
+                                
+                            nobreVoteDecrypted = parseInt(decrypt(nombreVote));
+                            nobreVoteDecrypted = nobreVoteDecrypted + 1;
+
+                            }else {
+                            nobreVoteDecrypted = 1;
+                            }
+                            const nbreVoteEncrypt = encrypt(nobreVoteDecrypted);
+                            candidat.nombreVote = nbreVoteEncrypt;
                             votant.isVoted = true;
                             candidat.vote.push(votant._id);
                             const newVote = new Vote({votantId: votant._id, candidatId: candidat._id});
@@ -108,3 +170,4 @@ exports.voting = async (req, res) => {
     res.status(500).json({ message: 'An error occurred!', error });
     }
 }
+

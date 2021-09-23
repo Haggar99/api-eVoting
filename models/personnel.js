@@ -27,5 +27,12 @@ createdAt: {
   required: true,
 },
 });
+var Personnel;
 
-module.exports = mongoose.model('Personnel', personnelSchema);
+if (mongoose.models.Personnel) {
+    Personnel = mongoose.model('Personnel');
+  } else {
+    Personnel = mongoose.model('Personnel', personnelSchema);
+  }
+  module.exports = Personnel;
+// module.exports = mongoose.model('Personnel', personnelSchema);

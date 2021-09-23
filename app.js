@@ -8,7 +8,8 @@ const dotenv = require("dotenv");
 //import route
 const personnelRoutes = require('./routes/personnel');
 const votantRoutes = require('./routes/votant');
-
+const candidatRoutes = require('./routes/candidat');
+const adminRoutes = require('./routes/admin');
 const app = express();
 
 
@@ -36,4 +37,6 @@ app.use((req, res, next) => {
 
 app.use('/api/personnel/', personnelRoutes);
 app.use('/api/votant/', votantRoutes);
+app.use('/api/candidat/', candidatRoutes);
+app.use('/api/admin/', adminRoutes)
 module.exports = app;

@@ -5,11 +5,9 @@ const Schema = mongoose.Schema;
 const candidatSchema = new Schema({
     firstName: {
         type: String,
-        required: true
     },
     lastName: {
         tyep: String,
-        required: true,
     },
     cin: {
         type: String,
@@ -29,6 +27,9 @@ const candidatSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Admin',
         required: true
+    },
+    nombreVote: {
+        type: String
     },
     createdAt: {
       type: Schema.Types.Date,

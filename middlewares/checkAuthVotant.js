@@ -9,6 +9,7 @@ module.exports = (req, res, next) => {
             email: userData.email,
             userId: userData.userId
         };
+        console.log(userData);
         next();
     } catch (error) {
     throw Error('You are not authorized to perform the current operation!');
